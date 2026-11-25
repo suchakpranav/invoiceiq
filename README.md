@@ -1,53 +1,67 @@
-# InvoiceIQ
+# InvoiceIQ — v0.3.0 (PostgreSQL)
 
-A local-first invoice processing workspace for Indian small businesses. Version 0.1.0 is the application foundation, not an invoice extraction engine.
+Local-first invoice management with FastAPI, PostgreSQL, SQLAlchemy and Alembic.
+Authentication, document upload, OCR and full GST validation are not implemented.
+Use synthetic data only and bind the API to localhost.
 
-## Windows setup (Command Prompt)
+## Windows setup
 
-```bat
+Install PostgreSQL 17 (or 18) and pgAdmin from https://www.postgresql.org/download/windows/.
+Keep port 5432 and remember the administrator password. In pgAdmin, connect as
+`postgres`, open Query Tool on the `postgres` database and run each statement separately.
+Replace both password placeholders with distinct strong URL-safe passwords.
+
+```sql
+CREATE ROLE invoiceiq_app LOGIN PASSWORD 'REPLACE_APP_PASSWORD';
+CREATE ROLE invoiceiq_test LOGIN PASSWORD 'REPLACE_TEST_PASSWORD';
+CREATE DATABASE invoiceiq OWNER invoiceiq_app;
+CREATE DATABASE invoiceiq_test OWNER invoiceiq_test;
+```
+
+```cmd
 python -m venv .venv
 .venv\Scripts\activate.bat
 python -m pip install -r requirements-dev.txt
 copy .env.example .env
+```
+
+For an existing installation, preserve `.env` instead of copying over it. Set
+`INVOICEIQ_APP_VERSION=0.3.0` and replace `INVOICEIQ_DATABASE_URL` with
+`postgresql+psycopg://invoiceiq_app:YOUR_APP_PASSWORD@127.0.0.1:5432/invoiceiq`.
+Percent-encode reserved URL characters in passwords. Never commit credentials.
+
+```cmd
+python -m alembic upgrade head
+python -m alembic current
+python -m alembic check
 python -m uvicorn app.main:app --reload
 ```
 
-Open http://127.0.0.1:8000 for the workspace and http://127.0.0.1:8000/docs for API documentation.
+Open http://127.0.0.1:8000/docs. The homepage remains a service-status preview.
+The health endpoint indicates API liveness, not database readiness.
 
-## Checks
+## Tests
 
-```sh
-python -m pytest -q
+In a second CMD with the virtual environment active:
+
+```cmd
+set "INVOICEIQ_TEST_DATABASE_URL=postgresql+psycopg://invoiceiq_test:YOUR_TEST_PASSWORD@127.0.0.1:5432/invoiceiq_test"
+python -m pytest -v
 python -m ruff check .
 ```
 
+Tests require a dedicated database named `invoiceiq_test`; each fixture creates
+and migrates a random schema and drops only that schema afterward. The CI workflow
+starts an ephemeral PostgreSQL 17 service. Its password is for CI only.
+
 ## Design
 
-FastAPI serves a small static frontend and a versioned JSON health endpoint. Configuration comes from environment variables via Pydantic Settings. The application factory allows isolated test configuration. No database, OCR, authentication or invoice upload is implemented yet. Run on localhost only.
+Money is stored as integer paise (`subtotal_cents`) and tax rates as basis points.
+The API uses Decimal for calculations. SQLAlchemy sessions are scoped to repository
+operations, and the engine checks pooled connections before use. Search uses
+case-insensitive literal substring matching. Count and page queries are separate,
+so concurrent changes may affect pagination. The initial migration creates the
+invoice table and indexes. Back up before migrations; downgrading deletes data.
 
-## Next milestone
-
-Expand the API with invoice schemas, validation and persistent storage. Do not upload real customer documents or secrets to GitHub.
-
-## Phase 2 — Invoice API (0.2.0)
-
-Update `INVOICEIQ_APP_VERSION` in your local `.env` to `0.2.0`. Run the server
-with `python -m uvicorn app.main:app --reload` and open `/docs` to try the API.
-
-- POST `/api/v1/invoices`: create an invoice.
-- GET `/api/v1/invoices`: list, search (`q`), filter (`supplier`, `date_from`,
-  `date_to`) and paginate (`offset`, `limit`).
-- GET, PUT, DELETE `/api/v1/invoices/{invoice_id}`: retrieve, replace or delete.
-
-Example request:
-
-```json
-{"invoice_number":"INV-001","supplier":"Sample Traders","customer":"Demo Retail","invoice_date":"2026-11-25","subtotal":"1250.50","tax_rate":"18"}
-```
-
-Amounts use decimal arithmetic and tax is rounded half-up to two decimal places.
-This is a simplified tax calculation, not a GST compliance engine. Records live
-in memory, are lost on restart and are not shared between server processes.
-No authentication, duplicate detection or invoice upload is implemented yet.
-Use synthetic data only. The homepage remains the Phase 1 interface; use Swagger
-for invoice management. Run `python -m pytest -v` and `python -m ruff check .`.
+This edition does not import old SQLite records. Preserve any existing SQLite file
+if it contains data you need. PostgreSQL integration requires a running server.

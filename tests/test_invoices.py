@@ -3,7 +3,6 @@ from uuid import uuid4
 import pytest
 from fastapi.testclient import TestClient
 
-from app.core.config import Settings
 from app.main import create_app
 
 URL = "/api/v1/invoices"
@@ -14,8 +13,8 @@ DATA = {
 
 
 @pytest.fixture
-def client():
-    with TestClient(create_app(Settings(environment="test"))) as test_client:
+def client(db_settings):
+    with TestClient(create_app(db_settings)) as test_client:
         yield test_client
 
 
@@ -69,7 +68,24 @@ def test_rounding(client):
     assert record["tax_amount"] == "0.01"
 
 
-def test_app_isolation(client):
+def test_app_isolation(client, isolated_database):
     client.post(URL, json=DATA)
-    with TestClient(create_app(Settings(environment="test"))) as other:
+    with TestClient(create_app(isolated_database())) as other:
         assert other.get(URL).json()["total"] == 0
+
+
+def test_persistence(db_settings):
+    with TestClient(create_app(db_settings)) as first:
+        record = first.post(URL, json={**DATA, "notes": "Paid"}).json()
+    with TestClient(create_app(db_settings)) as second:
+        assert second.get(f"{URL}/{record['id']}").json() == record
+
+
+def test_literal_search(client):
+    client.post(URL, json=DATA)
+    assert client.get(URL, params={"q": "%"}).json()["total"] == 0
+
+
+def test_large_amount(client):
+    record = client.post(URL, json={**DATA, "subtotal": "9999999999.99"}).json()
+    assert client.get(f"{URL}/{record['id']}").json()["subtotal"] == "9999999999.99"

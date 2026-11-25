@@ -1,4 +1,5 @@
 import logging
+from contextlib import asynccontextmanager
 from pathlib import Path
 
 from fastapi import FastAPI
@@ -8,6 +9,7 @@ from pydantic import BaseModel
 
 from app.api.invoices import invoice_router
 from app.core.config import Settings
+from app.db.session import build_engine
 from app.repositories.invoice import InvoiceRepository
 
 STATIC_DIR = Path(__file__).resolve().parent / "static"
@@ -23,8 +25,17 @@ class HealthStatus(BaseModel):
 def create_app(settings: Settings | None = None) -> FastAPI:
     settings = settings or Settings()
     logging.basicConfig(level=settings.log_level.upper())
-    api = FastAPI(title=settings.app_name, version=settings.app_version)
-    api.include_router(invoice_router(InvoiceRepository()))
+    engine = build_engine(settings.database_url)
+
+    @asynccontextmanager
+    async def lifespan(api: FastAPI):
+        try:
+            yield
+        finally:
+            engine.dispose()
+
+    api = FastAPI(title=settings.app_name, version=settings.app_version, lifespan=lifespan)
+    api.include_router(invoice_router(InvoiceRepository(engine)))
     api.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
     @api.get("/", include_in_schema=False)
