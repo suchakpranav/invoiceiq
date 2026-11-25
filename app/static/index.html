@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>InvoiceIQ | Workspace</title>
+  <link rel="stylesheet" href="/static/style.css">
+  <script src="/static/app.js" defer></script>
+</head>
+<body>
+  <header><strong>InvoiceIQ</strong><span>Developer preview</span></header>
+  <main>
+    <p class="eyebrow">WORKSPACE / OVERVIEW</p>
+    <h1>Invoice processing workspace</h1>
+    <p class="muted">The foundation for invoice extraction, GST validation and reporting.</p>
+    <section class="panel" aria-labelledby="health-title">
+      <h2 id="health-title">Service status</h2>
+      <p id="status" role="status">Checking backend…</p>
+      <dl><dt>Version</dt><dd id="version">—</dd><dt>Environment</dt><dd id="environment">—</dd></dl>
+      <button id="refresh" type="button">Check connection</button>
+      <a href="/docs">API documentation</a>
+    </section>
+    <section class="panel"><h2>Development roadmap</h2><p>Invoice upload, extraction and analytics are not implemented in this release.</p></section>
+  </main>
+</body>
+</html>
