@@ -1,6 +1,6 @@
-from datetime import date
+from datetime import date, datetime
 
-from sqlalchemy import BigInteger, CheckConstraint, Date, Integer, String
+from sqlalchemy import BigInteger, CheckConstraint, Date, DateTime, ForeignKey, Integer, String
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 
@@ -23,3 +23,18 @@ class InvoiceRow(Base):
     subtotal_cents: Mapped[int] = mapped_column(BigInteger)
     tax_basis_points: Mapped[int] = mapped_column(Integer)
     notes: Mapped[str | None] = mapped_column(String(500))
+
+
+class DocumentRow(Base):
+    __tablename__ = "documents"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    invoice_id: Mapped[str | None] = mapped_column(
+        ForeignKey("invoices.id", ondelete="SET NULL"), index=True
+    )
+    original_filename: Mapped[str] = mapped_column(String(255))
+    storage_key: Mapped[str] = mapped_column(String(40), unique=True)
+    content_type: Mapped[str] = mapped_column(String(32))
+    size_bytes: Mapped[int] = mapped_column(BigInteger)
+    sha256: Mapped[str] = mapped_column(String(64), index=True)
+    uploaded_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))

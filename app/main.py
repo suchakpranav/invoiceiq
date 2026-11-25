@@ -7,6 +7,7 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
+from app.api.documents import document_router
 from app.api.invoices import invoice_router
 from app.core.config import Settings
 from app.db.session import build_engine
@@ -36,6 +37,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     api = FastAPI(title=settings.app_name, version=settings.app_version, lifespan=lifespan)
     api.include_router(invoice_router(InvoiceRepository(engine)))
+    api.include_router(document_router(engine, settings.upload_dir, settings.max_upload_bytes))
     api.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
     @api.get("/", include_in_schema=False)
