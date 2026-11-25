@@ -7,7 +7,7 @@ Use synthetic data only and bind the API to localhost.
 ## Windows setup
 
 Install PostgreSQL 17 (or 18) and pgAdmin from https://www.postgresql.org/download/windows/.
-Keep port 5432 and remember the administrator password. In pgAdmin, connect as
+Keep port 5433 and remember the administrator password. In pgAdmin, connect as
 `postgres`, open Query Tool on the `postgres` database and run each statement separately.
 Replace both password placeholders with distinct strong URL-safe passwords.
 
@@ -27,7 +27,7 @@ copy .env.example .env
 
 For an existing installation, preserve `.env` instead of copying over it. Set
 `INVOICEIQ_APP_VERSION=0.3.0` and replace `INVOICEIQ_DATABASE_URL` with
-`postgresql+psycopg://invoiceiq_app:YOUR_APP_PASSWORD@127.0.0.1:5432/invoiceiq`.
+`postgresql+psycopg://invoiceiq_app:YOUR_APP_PASSWORD@127.0.0.1:5433/invoiceiq`.
 Percent-encode reserved URL characters in passwords. Never commit credentials.
 
 ```cmd
@@ -45,7 +45,7 @@ The health endpoint indicates API liveness, not database readiness.
 In a second CMD with the virtual environment active:
 
 ```cmd
-set "INVOICEIQ_TEST_DATABASE_URL=postgresql+psycopg://invoiceiq_test:YOUR_TEST_PASSWORD@127.0.0.1:5432/invoiceiq_test"
+set "INVOICEIQ_TEST_DATABASE_URL=postgresql+psycopg://invoiceiq_test:YOUR_TEST_PASSWORD@127.0.0.1:5433/invoiceiq_test"
 python -m pytest -v
 python -m ruff check .
 ```
