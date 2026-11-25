@@ -6,7 +6,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
     app_name: str = "InvoiceIQ"
-    app_version: str = "0.4.0"
+    app_version: str = "0.5.0"
     environment: str = "development"
     database_url: str = "postgresql+psycopg://invoiceiq_app:CHANGE_ME@127.0.0.1:5433/invoiceiq"
     log_level: str = "INFO"

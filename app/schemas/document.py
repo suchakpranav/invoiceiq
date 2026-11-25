@@ -15,6 +15,7 @@ class Document(BaseModel):
     sha256: str
     uploaded_at: datetime
 
+
     @field_serializer("uploaded_at", when_used="json")
     def serialize_uploaded_at(self, value: datetime) -> str:
         return value.astimezone(UTC).isoformat().replace("+00:00", "Z")

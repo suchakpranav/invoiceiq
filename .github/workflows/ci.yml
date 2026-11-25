@@ -11,7 +11,7 @@ jobs:
           POSTGRES_PASSWORD: ci_only_password
           POSTGRES_DB: invoiceiq_test
         ports:
-          - 5433:5433
+          - 5433:5432
         options: >-
           --health-cmd "pg_isready -U invoiceiq_ci -d invoiceiq_test"
           --health-interval 5s
