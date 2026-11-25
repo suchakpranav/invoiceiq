@@ -8,7 +8,7 @@ class Settings(BaseSettings):
     app_name: str = "InvoiceIQ"
     app_version: str = "0.4.0"
     environment: str = "development"
-    database_url: str = "postgresql+psycopg://invoiceiq_app:CHANGE_ME@127.0.0.1:5432/invoiceiq"
+    database_url: str = "postgresql+psycopg://invoiceiq_app:CHANGE_ME@127.0.0.1:5433/invoiceiq"
     log_level: str = "INFO"
     upload_dir: Path = Path("uploads")
     max_upload_bytes: int = Field(default=10 * 1024 * 1024, ge=1, le=50 * 1024 * 1024)
