@@ -26,21 +26,7 @@ def invoice_router(repository: InvoiceRepository) -> APIRouter:
     ) -> InvoicePage:
         if date_from and date_to and date_from > date_to:
             raise HTTPException(422, "date_from must not exceed date_to")
-        records = repository.list()
-        term = q.strip().casefold()
-        records = [
-            r for r in records
-            if any(term in value.casefold() for value in (
-                r.invoice_number, r.supplier, r.customer
-            ))
-            and supplier.strip().casefold() in r.supplier.casefold()
-            and (date_from is None or r.invoice_date >= date_from)
-            and (date_to is None or r.invoice_date <= date_to)
-        ]
-        records.sort(key=lambda r: (r.invoice_date, str(r.id)), reverse=True)
-        return InvoicePage(
-            items=records[offset:offset + limit], total=len(records), offset=offset, limit=limit
-        )
+        return repository.list(q, supplier, date_from, date_to, offset, limit)
 
     @router.get("/{invoice_id}", response_model=Invoice)
     def get_invoice(invoice_id: UUID) -> Invoice:

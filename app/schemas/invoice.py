@@ -19,6 +19,7 @@ class InvoiceInput(BaseModel):
     invoice_date: date
     subtotal: Money
     tax_rate: Rate = Decimal("0")
+    notes: str | None = Field(default=None, max_length=500)
 
 
 class Invoice(InvoiceInput):
