@@ -1,4 +1,4 @@
-# InvoiceIQ — v0.4.0 (PostgreSQL)
+# InvoiceIQ — v0.5.0 (PostgreSQL)
 
 Local-first invoice management with FastAPI, PostgreSQL, SQLAlchemy and Alembic.
 Authentication, OCR and full GST validation are not implemented.
@@ -26,7 +26,7 @@ copy .env.example .env
 ```
 
 For an existing installation, preserve `.env` instead of copying over it. Set
-`INVOICEIQ_APP_VERSION=0.3.0` and replace `INVOICEIQ_DATABASE_URL` with
+`INVOICEIQ_APP_VERSION=0.5.0` and replace `INVOICEIQ_DATABASE_URL` with
 `postgresql+psycopg://invoiceiq_app:YOUR_APP_PASSWORD@127.0.0.1:5433/invoiceiq`.
 Percent-encode reserved URL characters in passwords. Never commit credentials.
 
@@ -68,8 +68,8 @@ if it contains data you need. PostgreSQL integration requires a running server.
 
 ## Phase 4: document uploads
 
-Existing installations: preserve `.env`, update version to 0.4.0, install requirements,
-run `python -m alembic upgrade head` (revision 0002), then start Uvicorn.
+Existing installations: preserve `.env`, update version to 0.5.0, install requirements,
+run `python -m alembic upgrade head` (revision 0003), then start Uvicorn.
 Do not recreate the database. Optional settings: `INVOICEIQ_UPLOAD_DIR=uploads`,
 `INVOICEIQ_MAX_UPLOAD_BYTES=10485760`. Keep uploads outside the static directory.
 
@@ -86,3 +86,29 @@ before multipart parsing. The stored-file limit is not a network request limit.
 Database and filesystem writes are not atomic together; crashes can leave orphaned
 files. Back up both database and upload directory while writes are stopped.
 Use only synthetic documents. Do not downgrade 0002 without backing up metadata.
+
+
+## Phase 5: page preparation
+
+POST `/api/v1/documents/{document_id}/process` to extract embedded PDF text or
+prepare an image for OCR. GET `/{document_id}/pages` under the same prefix to
+retrieve persisted results, and GET `/{document_id}/pages/1/image` for a prepared
+PNG (only for OCR-required pages). No request body is needed for processing.
+Reprocessing replaces previous results in one transaction. Deleting a document
+cascades to its pages. Originals are not modified. Prepared PNGs are stored as
+PostgreSQL BYTEA, so database backups include them; original uploads still need
+separate backups. An empty page list means not processed.
+
+PDFium (via pypdfium2) renders pages and extracts text; Pillow preprocesses images.
+Limits: 20 PDF pages, 100,000 characters per page, 2400 pixels on the longest
+prepared side, 2 MB per prepared PNG. Any nonempty embedded text selects the
+text path; mixed image/text pages and defective text layers can need later OCR.
+Fixed thresholding is a baseline, not an accuracy guarantee. Processing is
+synchronous, holds a document row lock, and is not sandboxed. Use trusted synthetic
+files locally only. No OCR, queue, or persistent failure status yet.
+
+Run `python generate_phase5_samples.py` to create synthetic digital and scanned
+PDFs and a PNG. Run `python -m pytest tests/test_processing.py tests/test_storage.py
+ tests/test_document_schema.py -q` (one command on one line) for database-free tests.
+Full suite target: 35 tests, including PostgreSQL integration. Keep port 5433;
+CI maps host 5433 to container 5432. Do not downgrade 0003 without a backup.

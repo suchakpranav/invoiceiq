@@ -11,3 +11,5 @@ uploads/
 
 *.dump
 *.backup
+
+sample_data/

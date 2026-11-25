@@ -8,3 +8,5 @@ psycopg[binary]>=3.2,<4
 python-multipart>=0.0.22,<1
 Pillow>=12.2,<13
 pypdf>=5.9,<7
+
+pypdfium2>=4.30,<6
