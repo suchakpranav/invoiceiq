@@ -6,7 +6,9 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
+from app.api.invoices import invoice_router
 from app.core.config import Settings
+from app.repositories.invoice import InvoiceRepository
 
 STATIC_DIR = Path(__file__).resolve().parent / "static"
 logger = logging.getLogger(__name__)
@@ -22,6 +24,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     settings = settings or Settings()
     logging.basicConfig(level=settings.log_level.upper())
     api = FastAPI(title=settings.app_name, version=settings.app_version)
+    api.include_router(invoice_router(InvoiceRepository()))
     api.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
     @api.get("/", include_in_schema=False)
