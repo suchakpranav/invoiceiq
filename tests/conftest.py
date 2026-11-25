@@ -12,7 +12,7 @@ from app.db.session import build_engine
 
 
 @pytest.fixture
-def isolated_database(monkeypatch):
+def isolated_database(monkeypatch, tmp_path):
     raw_url = os.environ.get("INVOICEIQ_TEST_DATABASE_URL")
     if not raw_url:
         pytest.fail("Set INVOICEIQ_TEST_DATABASE_URL to the dedicated invoiceiq_test database")
@@ -31,7 +31,7 @@ def isolated_database(monkeypatch):
         rendered = scoped_url.render_as_string(hide_password=False)
         monkeypatch.setenv("INVOICEIQ_DATABASE_URL", rendered)
         command.upgrade(Config("alembic.ini"), "head")
-        return Settings(environment="test", database_url=rendered)
+        return Settings(environment="test", database_url=rendered, upload_dir=tmp_path / schema)
 
     try:
         yield create

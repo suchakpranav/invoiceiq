@@ -1,7 +1,7 @@
-# InvoiceIQ — v0.3.0 (PostgreSQL)
+# InvoiceIQ — v0.4.0 (PostgreSQL)
 
 Local-first invoice management with FastAPI, PostgreSQL, SQLAlchemy and Alembic.
-Authentication, document upload, OCR and full GST validation are not implemented.
+Authentication, OCR and full GST validation are not implemented.
 Use synthetic data only and bind the API to localhost.
 
 ## Windows setup
@@ -65,3 +65,24 @@ invoice table and indexes. Back up before migrations; downgrading deletes data.
 
 This edition does not import old SQLite records. Preserve any existing SQLite file
 if it contains data you need. PostgreSQL integration requires a running server.
+
+## Phase 4: document uploads
+
+Existing installations: preserve `.env`, update version to 0.4.0, install requirements,
+run `python -m alembic upgrade head` (revision 0002), then start Uvicorn.
+Do not recreate the database. Optional settings: `INVOICEIQ_UPLOAD_DIR=uploads`,
+`INVOICEIQ_MAX_UPLOAD_BYTES=10485760`. Keep uploads outside the static directory.
+
+Use Swagger `/docs` to POST `/api/v1/documents` with a PDF, PNG or JPEG and optional
+invoice UUID. GET the collection or individual metadata; GET `/{id}/download` to
+retrieve bytes; PATCH `/{id}/invoice` with an invoice UUID or null; DELETE `/{id}`
+to remove a document. Deleting an invoice unlinks its documents, preserving files.
+
+Run `python -m pytest tests/test_storage.py -q` without a database; the complete
+suite requires the dedicated PostgreSQL test database described above.
+
+Local development only: no authentication, malware scanning or request-body cap
+before multipart parsing. The stored-file limit is not a network request limit.
+Database and filesystem writes are not atomic together; crashes can leave orphaned
+files. Back up both database and upload directory while writes are stopped.
+Use only synthetic documents. Do not downgrade 0002 without backing up metadata.
