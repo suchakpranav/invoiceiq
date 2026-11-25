@@ -1,11 +1,14 @@
 from datetime import date, datetime
 
 from sqlalchemy import (
+    JSON,
     BigInteger,
     CheckConstraint,
     Date,
     DateTime,
+    Float,
     ForeignKey,
+    ForeignKeyConstraint,
     Integer,
     String,
     Text,
@@ -62,3 +65,19 @@ class ProcessedPageRow(Base):
     image_png: Mapped[bytes | None]
     width: Mapped[int | None] = mapped_column(Integer)
     height: Mapped[int | None] = mapped_column(Integer)
+
+
+class OCRPageRow(Base):
+    __tablename__ = "ocr_pages"
+    __table_args__ = (
+        ForeignKeyConstraint(
+            ["document_id", "page_number"],
+            ["processed_pages.document_id", "processed_pages.page_number"],
+            ondelete="CASCADE",
+        ),
+    )
+    document_id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    page_number: Mapped[int] = mapped_column(Integer, primary_key=True)
+    text: Mapped[str] = mapped_column(Text)
+    words: Mapped[list] = mapped_column(JSON)
+    mean_confidence: Mapped[float | None] = mapped_column(Float)

@@ -9,6 +9,7 @@ from pydantic import BaseModel
 
 from app.api.documents import document_router
 from app.api.invoices import invoice_router
+from app.api.ocr import ocr_router
 from app.api.processing import processing_router
 from app.core.config import Settings
 from app.db.session import build_engine
@@ -40,6 +41,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     api.include_router(invoice_router(InvoiceRepository(engine)))
     api.include_router(document_router(engine, settings.upload_dir, settings.max_upload_bytes))
     api.include_router(processing_router(engine, settings.upload_dir))
+    api.include_router(ocr_router(engine, settings))
     api.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
     @api.get("/", include_in_schema=False)

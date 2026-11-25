@@ -112,3 +112,19 @@ PDFs and a PNG. Run `python -m pytest tests/test_processing.py tests/test_storag
  tests/test_document_schema.py -q` (one command on one line) for database-free tests.
 Full suite target: 35 tests, including PostgreSQL integration. Keep port 5433;
 CI maps host 5433 to container 5432. Do not downgrade 0003 without a backup.
+
+## Phase 6 — local OCR (0.6.0)
+
+Install Tesseract 5 separately and verify `tesseract --version` and
+`tesseract --list-langs` (eng required). Set INVOICEIQ_OCR_EXECUTABLE to its
+absolute executable path if not on PATH. No new Python dependency is needed:
+the adapter invokes the CLI and parses TSV with Python's csv module.
+Set version 0.6.0 in .env, preserve PostgreSQL port 5433, run
+`python -m alembic upgrade head` (0004) and `python -m alembic check`.
+Upload a sample, POST /api/v1/documents/{id}/process, then POST
+/api/v1/documents/{id}/ocr and GET the same OCR URL. Embedded text is reused;
+OCR words and confidence are stored in ocr_pages. Reprocessing invalidates OCR
+via cascading deletion. OCR is synchronous with a 30-second per-page default
+subprocess timeout; use trusted local files only. The test suite includes 38
+cases, including a mocked OCR API test; actual engine recognition requires a
+manual smoke test. Confidence is not measured accuracy.
